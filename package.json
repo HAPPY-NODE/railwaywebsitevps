@@ -1,0 +1,20 @@
+{
+  "name": "happy-node-rdp",
+  "version": "2.0.0",
+  "description": "HAPPY NODE - Ubuntu XFCE RDP (webtop) portal for Railway",
+  "license": "MIT",
+  "private": true,
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.6",
+    "express": "^4.19.2",
+    "http-proxy": "^1.6.3"
+  }
+}

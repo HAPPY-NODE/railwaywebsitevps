@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register - HAPPY NODE</title>
+  <meta name="page-title" content="Register">
+  <link rel="icon" type="image/svg+xml" href="/logo.svg">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="center-page">
+    <div class="w-full max-w-sm">
+      <div style="display:flex; align-items:center; gap:10px; justify-content:center;">
+        <img src="/logo.svg" alt="logo" width="24" height="24">
+        <span class="brand-title" id="brandName">HAPPY NODE</span>
+      </div>
+      <div class="muted" style="text-align:center; font-size:12px; margin-bottom:24px;" id="brandTag">Ubuntu XFCE remote desktops</div>
+
+      <div class="card p-6">
+        <div style="display:flex; justify-content:flex-end; margin:-6px -6px 6px 0;">
+          <div class="theme-group">
+            <button type="button" class="theme-btn" data-theme="light" title="Light"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg></button>
+            <button type="button" class="theme-btn" data-theme="dark" title="Dark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"></path></svg></button>
+            <button type="button" class="theme-btn" data-theme="system" title="System"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"></rect><line x1="8" x2="16" y1="21" y2="21"></line><line x1="12" x2="12" y1="17" y2="21"></line></svg></button>
+          </div>
+        </div>
+        <h1 class="card-title">Create account</h1>
+        <p class="card-sub">Register to get your own desktop.</p>
+
+        <form id="regForm" onsubmit="doRegister(event)">
+          <div class="form-group">
+            <label for="username">Username</label>
+            <input id="username" class="input" name="username" autocomplete="username" required minlength="3" maxlength="20" pattern="[A-Za-z0-9_]+" placeholder="your-username">
+          </div>
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input id="password" class="input" name="password" type="password" autocomplete="new-password" required minlength="6" maxlength="72" placeholder="min 6 characters">
+          </div>
+          <div class="form-group">
+            <label for="confirm">Confirm password</label>
+            <input id="confirm" class="input" name="confirm" type="password" autocomplete="new-password" required placeholder="••••••••">
+          </div>
+          <div class="err" id="err"></div>
+          <button type="submit" class="btn primary w-full">Register</button>
+        </form>
+      </div>
+
+      <p class="muted" style="text-align:center; margin-top:16px;">Already have an account? <a href="index.html">Sign in</a></p>
+    </div>
+  </div>
+  <script src="/site.js"></script>
+  <script>
+    async function doRegister(e) {
+      e.preventDefault();
+      const err = document.getElementById('err');
+      err.textContent = '';
+      if (!/^[A-Za-z0-9_]{3,20}$/.test(username.value)) {
+        err.textContent = 'Username: 3-20 chars, letters/numbers/underscore only.'; return;
+      }
+      if (password.value !== confirm.value) {
+        err.textContent = 'Passwords do not match.'; return;
+      }
+      try {
+        const r = await fetch('/api/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: username.value.trim(), password: password.value })
+        });
+        const d = await r.json();
+        if (!r.ok) { err.textContent = d.error || 'Registration failed'; return; }
+        location.href = '/app.html';
+      } catch (_) { err.textContent = 'Network error'; }
+    }
+  </script>
+</body>
+</html>

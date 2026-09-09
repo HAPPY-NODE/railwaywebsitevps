@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - HAPPY NODE</title>
+  <meta name="page-title" content="Admin">
+  <link rel="icon" type="image/svg+xml" href="/logo.svg">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="top-left">
+      <img src="/logo.svg" alt="" width="16" height="16">
+      <span class="brand-sm" id="brandName">HAPPY NODE</span>
+      <span class="role-badge admin">Admin</span>
+    </div>
+    <div class="top-right">
+      <div class="theme-group">
+        <button class="theme-btn" data-theme="light" title="Light"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg></button>
+        <button class="theme-btn" data-theme="dark" title="Dark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"></path></svg></button>
+        <button class="theme-btn" data-theme="system" title="System"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"></rect><line x1="8" x2="16" y1="21" y2="21"></line><line x1="12" x2="12" y1="17" y2="21"></line></svg></button>
+      </div>
+      <button class="btn outline xs" onclick="location.href='/app.html'">My Desktop</button>
+      <button class="btn ghost xs" onclick="logout()"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 17 5-5-5-5"></path><path d="M21 12H9"></path><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path></svg>Sign out</button>
+    </div>
+  </header>
+
+  <main class="page">
+    <div class="row-between">
+      <div>
+        <h1 class="page-title">Users</h1>
+        <p class="page-sub">Manage every account &amp; remote desktop.</p>
+      </div>
+      <button class="btn outline xs" id="refreshBtn"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path><path d="M8 16H3v5"></path></svg>Refresh</button>
+    </div>
+
+    <div class="banner">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"></path></svg>
+      <span id="statsLine">Loading…</span>
+    </div>
+
+    <div class="list-card" id="rows"></div>
+    <div class="err" id="adminMsg"></div>
+
+    <div class="card p-6">
+      <h2 class="page-title" style="font-size:18px; margin-bottom:4px;">Admin account</h2>
+      <p class="page-sub">Admin login: <b class="mono" id="adminUserLabel">admin</b> &mdash; change its password here.</p>
+      <div class="form-group">
+        <label for="aPass">New admin password (6&ndash;72 chars)</label>
+        <input id="aPass" class="input" type="password" maxlength="72" placeholder="New password" style="max-width:280px;">
+      </div>
+      <div class="err" id="adminPassMsg"></div>
+      <button id="saveAdminPassBtn" class="btn primary xs" style="margin-top:8px;">Change admin password</button>
+    </div>
+
+    <div class="card p-6">
+      <h2 class="page-title" style="font-size:18px; margin-bottom:4px;">Branding</h2>
+      <p class="page-sub">Change the site name &amp; tagline shown on every page &mdash; applied instantly.</p>
+      <div class="form-group">
+        <label for="sName">Site name</label>
+        <input id="sName" class="input" maxlength="60" placeholder="HAPPY NODE">
+      </div>
+      <div class="form-group">
+        <label for="sTag">Tagline</label>
+        <input id="sTag" class="input" maxlength="120" placeholder="Ubuntu XFCE remote desktops">
+      </div>
+      <div class="err" id="brandMsg"></div>
+      <button id="saveBrandBtn" class="btn primary xs" style="margin-top:8px;">Save branding</button>
+    </div>
+
+    <div class="card p-6">
+      <h2 class="page-title" style="font-size:18px; margin-bottom:4px;">Site settings</h2>
+      <p class="page-sub">Limit banner, VM expire time &amp; maintenance mode &mdash; applied instantly.</p>
+      <div class="form-group">
+        <label for="sBanner">Limit banner text (shown on the dashboard)</label>
+        <input id="sBanner" class="input" maxlength="200" placeholder="Limit: 1 VM running at a time. VMs auto-stop after 4 hr, freeing your slot for a new one.">
+      </div>
+      <div class="form-group">
+        <label for="sTtl">VM expire time (hours, 1&ndash;24)</label>
+        <input id="sTtl" class="input" type="number" min="1" max="24" step="1" placeholder="4" style="max-width:140px;">
+      </div>
+      <div class="form-group">
+        <label for="sMaint">Maintenance mode</label>
+        <div class="flex items-center gap-2">
+          <button id="maintBtn" class="btn outline xs">Turn maintenance ON</button>
+          <span class="muted text-xs" id="maintNote">Site is open &mdash; users can register &amp; use VMs.</span>
+        </div>
+      </div>
+      <div class="err" id="setMsg"></div>
+      <button id="saveSetBtn" class="btn primary xs" style="margin-top:8px;">Save settings</button>
+    </div>
+  </main>
+
+  <script src="/site.js"></script>
+  <script src="/admin.js"></script>
+</body>
+</html>
