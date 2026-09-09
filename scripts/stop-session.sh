@@ -9,7 +9,7 @@ VMNAME="${3:-desktop}"
 PID_FILE="/tmp/vnc-${DISPNUM}.pid"
 VNC_PORT=$((5900 + DISPNUM))
 
-echo "[stop] stopping display=:${DISPNUM} webport=${WEBPORT} name=${VM_NAME}"
+echo "[stop] stopping display=:${DISPNUM} webport=${WEBPORT} name=${VMNAME}"
 
 # Kill by PID file
 if [ -f "$PID_FILE" ]; then

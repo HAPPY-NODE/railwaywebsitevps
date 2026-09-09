@@ -1,12 +1,6 @@
 #!/usr/bin/env bash
 # start-session.sh - boot a single per-user Ubuntu/XFCE desktop
 # Uses TigerVNC (tigervnc-standalone-server) on plain Ubuntu
-#
-#   $1 = display   (e.g. 20  ->  :20)
-#   $2 = webport   (noVNC websocket port, e.g. 7001)
-#   $3 = width     (e.g. 1280)
-#   $4 = height    (e.g. 720)
-#   $5 = vmName    (human-friendly label, optional)
 set -uo pipefail
 
 DISPLAY_NUM="${1:-20}"
@@ -44,10 +38,10 @@ echo "PID File: ${PID_FILE}"
 mkdir -p "${VNC_HOME}/.vnc"
 chown -R "${VNC_USER}:${VNC_USER}" "${VNC_HOME}/.vnc" 2>/dev/null || true
 
-# Set VNC password
+# Set VNC password using Python (vncpasswd not available in container)
 if [ ! -f "${VNC_HOME}/.vnc/passwd" ] || [ ! -s "${VNC_HOME}/.vnc/passwd" ]; then
   echo "Setting VNC password..."
-  echo "$VNCPASS" | vncpasswd -f > "${VNC_HOME}/.vnc/passwd"
+  python3 -c "pw='$VNCPASS'.encode()[:8].ljust(8,b'\\x00'); open('${VNC_HOME}/.vnc/passwd','wb').write(bytes(b^0x42 for b in pw))"
   chmod 600 "${VNC_HOME}/.vnc/passwd"
   chown "${VNC_USER}:${VNC_USER}" "${VNC_HOME}/.vnc/passwd" 2>/dev/null || true
 fi
@@ -77,11 +71,12 @@ LOCK_FILE="/tmp/.X${DISPLAY_NUM}-lock"
 EXISTING_VNCS=$(pgrep -f "Xvnc.*:${DISPLAY_NUM}" 2>/dev/null | tr '\n' ' ')
 [ -n "$EXISTING_VNCS" ] && echo "Existing VNC: $EXISTING_VNCS" || echo "Existing VNC: none"
 
-# Check port
+# Check port - initialize to empty to avoid unbound variable with set -u
+PORT_PID=""
 if command -v ss >/dev/null 2>&1; then
   PORT_PID=$(ss -tlnp 2>/dev/null | grep ":${WEBPORT}" | grep -oP 'pid=\K[0-9]+' | head -1)
-  [ -n "$PORT_PID" ] && echo "Port ${WEBPORT}: in use by PID $PORT_PID" || echo "Port ${WEBPORT}: free"
 fi
+[ -n "$PORT_PID" ] && echo "Port ${WEBPORT}: in use by PID $PORT_PID" || echo "Port ${WEBPORT}: free"
 
 # --- Clean up conflicts ---
 echo "--- Cleaning stale state ---"
