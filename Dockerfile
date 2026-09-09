@@ -9,8 +9,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     DATA_DIR=/data \
     DISPLAY=:1 \
     VNC_USER=abc \
-    VNC_HOME=/home/abc \
-    VNC_PW=password
+    VNC_HOME=/home/abc
 
 # --- System packages: XFCE, VNC, D-Bus, etc. (NO nodejs here) ---
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -22,7 +21,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     fonts-noto-color-emoji fonts-noto-cjk \
     novnc websockify \
     tigervnc-standalone-server tigervnc-common tigervnc-viewer \
-    net-tools lsof psmisc python3 \
+    net-tools lsof psmisc \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -54,11 +53,8 @@ COPY . .
 RUN chmod +x /app/scripts/*.sh \
     && ln -sf /app/public/logo.svg /app/public/favicon.svg || true
 
-# --- VNC config for user ---
-# Create VNC password file using Python single-line (VNC uses XOR key 0x42)
-RUN python3 -c "pw='$VNC_PW'.encode()[:8].ljust(8,b'\\x00'); open('$VNC_HOME/.vnc/passwd','wb').write(bytes(b^0x42 for b in pw))" \
-    && chmod 600 $VNC_HOME/.vnc/passwd \
-    && chown -R $VNC_USER:$VNC_USER $VNC_HOME/.vnc
+# --- VNC config for user (NO PASSWORD) ---
+# No password file needed - using -SecurityTypes None
 
 # --- XFCE xstartup for VNC ---
 RUN cat > $VNC_HOME/.vnc/xstartup <<'EOF'

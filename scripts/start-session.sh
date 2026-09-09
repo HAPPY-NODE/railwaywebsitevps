@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # start-session.sh - boot a single per-user Ubuntu/XFCE desktop
 # Uses TigerVNC (tigervnc-standalone-server) on plain Ubuntu
+# NO PASSWORD - direct connect
 set -uo pipefail
 
 DISPLAY_NUM="${1:-20}"
@@ -17,7 +18,6 @@ HEIGHT=$((HEIGHT + 0))
 
 VNC_USER="${VNC_USER:-abc}"
 VNC_HOME="${VNC_HOME:-/home/abc}"
-VNCPASS="${VNC_PW:-password}"
 PID_FILE="/tmp/vnc-${DISPLAY_NUM}.pid"
 LOG_FILE="/tmp/happynode-session-${VMNAME:-desktop}.log"
 
@@ -37,14 +37,6 @@ echo "PID File: ${PID_FILE}"
 # Ensure VNC dir exists
 mkdir -p "${VNC_HOME}/.vnc"
 chown -R "${VNC_USER}:${VNC_USER}" "${VNC_HOME}/.vnc" 2>/dev/null || true
-
-# Set VNC password using Python (vncpasswd not available in container)
-if [ ! -f "${VNC_HOME}/.vnc/passwd" ] || [ ! -s "${VNC_HOME}/.vnc/passwd" ]; then
-  echo "Setting VNC password..."
-  python3 -c "pw='$VNCPASS'.encode()[:8].ljust(8,b'\\x00'); open('${VNC_HOME}/.vnc/passwd','wb').write(bytes(b^0x42 for b in pw))"
-  chmod 600 "${VNC_HOME}/.vnc/passwd"
-  chown "${VNC_USER}:${VNC_USER}" "${VNC_HOME}/.vnc/passwd" 2>/dev/null || true
-fi
 
 # Ensure xstartup exists
 if [ ! -f "${VNC_HOME}/.vnc/xstartup" ]; then
@@ -116,25 +108,25 @@ if [ -n "$PORT_CHECK" ]; then
 fi
 echo "State clean"
 
-# --- Start VNC server ---
-echo "--- Starting TigerVNC ---"
+# --- Start VNC server (NO PASSWORD) ---
+echo "--- Starting TigerVNC (no auth) ---"
 
 # TigerVNC calculates the port as 5900 + display number
 VNC_PORT=$((5900 + DISPLAY_NUM))
 
 echo "VNC Port: ${VNC_PORT}"
-echo "Command: /usr/bin/Xvnc :${DISPLAY_NUM} -geometry ${WIDTH}x${HEIGHT} -depth 24 -rfbauth ${VNC_HOME}/.vnc/passwd -rfbport ${VNC_PORT} -localhost no -desktop ${VMNAME} -AlwaysShared -AcceptKeyEvents"
+echo "Command: /usr/bin/Xvnc :${DISPLAY_NUM} -geometry ${WIDTH}x${HEIGHT} -depth 24 -rfbport ${VNC_PORT} -localhost no -desktop ${VMNAME} -AlwaysShared -AcceptKeyEvents -SecurityTypes None"
 
-# Start Xvnc
+# Start Xvnc WITHOUT password
 /usr/bin/Xvnc ":${DISPLAY_NUM}" \
   -geometry "${WIDTH}x${HEIGHT}" \
   -depth 24 \
-  -rfbauth "${VNC_HOME}/.vnc/passwd" \
   -rfbport "$VNC_PORT" \
   -localhost no \
   -desktop "${VMNAME}" \
   -AlwaysShared \
   -AcceptKeyEvents \
+  -SecurityTypes None \
   >"$LOG_FILE" 2>&1 &
 
 VNC_PID=$!
