@@ -55,14 +55,10 @@ RUN chmod +x /app/scripts/*.sh \
     && ln -sf /app/public/logo.svg /app/public/favicon.svg || true
 
 # --- VNC config for user ---
-# Create VNC password file using Python (VNC uses fixed XOR key 0x42)
-RUN python3 -c "
-import os
-pw = os.environ.get('VNC_PW', 'password').encode()[:8].ljust(8, b'\\x00')
-enc = bytes(b ^ 0x42 for b in pw)
-with open('/home/abc/.vnc/passwd', 'wb') as f:
-    f.write(enc)
-" && chmod 600 /home/abc/.vnc/passwd && chown -R abc:abc /home/abc/.vnc
+# Create VNC password file using Python single-line (VNC uses XOR key 0x42)
+RUN python3 -c "pw='$VNC_PW'.encode()[:8].ljust(8,b'\\x00'); open('$VNC_HOME/.vnc/passwd','wb').write(bytes(b^0x42 for b in pw))" \
+    && chmod 600 $VNC_HOME/.vnc/passwd \
+    && chown -R $VNC_USER:$VNC_USER $VNC_HOME/.vnc
 
 # --- XFCE xstartup for VNC ---
 RUN cat > $VNC_HOME/.vnc/xstartup <<'EOF'
