@@ -1,6 +1,6 @@
 'use strict';
 /**
- * auth.js — register / login helpers.
+ * auth.js register / login helpers.
  * Passwords are hashed with bcryptjs (pure JS, no native compile needed).
  */
 const crypto = require('crypto');
@@ -8,8 +8,7 @@ const bcrypt = require('bcryptjs');
 
 const cookieName = 'happynode_session';
 
-// Built-in admin account (env vars override). The admin password can also be
-// changed at runtime from the admin panel — it is then stored hashed in the store.
+// Built-in admin account (env vars override).
 const ADMIN_USER = process.env.ADMIN_USER || 'admin';
 const ADMIN_PASS = process.env.ADMIN_PASSWORD || 'admin123';
 
@@ -24,25 +23,26 @@ function validateUsername(u) {
   return typeof u === 'string' && USER_RE.test(u);
 }
 function validatePassword(p) {
-  return typeof p === 'string' && p.length >= 6 && p.length <= 72;
+  return typeof p === 'string' && p.length >= 4 && p.length <= 72;
 }
 
 function randomToken() {
   return crypto.randomBytes(32).toString('hex');
 }
 
+// Returns user object on success, null on failure
 async function register(username, password) {
   if (!validateUsername(username)) {
-    return { ok: false, error: 'Username must be 3-20 chars (letters, numbers, underscore).' };
+    return null;
   }
   if (!validatePassword(password)) {
-    return { ok: false, error: 'Password must be 6-72 characters.' };
+    return null;
   }
   if (StoreRef.getUser(username)) {
-    return { ok: false, error: 'Username already taken.' };
+    return null;
   }
   if (username === ADMIN_USER) {
-    return { ok: false, error: 'This username is reserved.' };
+    return null;
   }
   const role = 'user';
   const hash = bcrypt.hashSync(password, 10);
@@ -54,30 +54,31 @@ async function register(username, password) {
     sessionsStarted: 0,
     mock: false
   });
-  return { ok: true, role };
+  return { username, role };
 }
 
+// Returns user object on success, null on failure
 async function login(username, password) {
-  // Admin check (env overrides the stored hash so a lost volume can't lock you out).
+  // Admin check
   if (username === ADMIN_USER) {
     if (await verifyAdminPassword(password)) {
-      return { ok: true, role: 'admin', username };
+      return { username, role: 'admin' };
     }
-    return { ok: false, error: 'Invalid credentials.' };
+    return null;
   }
 
   const user = StoreRef.getUser(username);
-  if (!user) return { ok: false, error: 'Invalid credentials.' };
+  if (!user) return null;
   if (!bcrypt.compareSync(password, user.password)) {
-    return { ok: false, error: 'Invalid credentials.' };
+    return null;
   }
-  return { ok: true, role: user.role || 'user', username };
+  return { username, role: user.role || 'user' };
 }
 
-function openSession(res, username, role) {
+function setSession(res, user) {
   const token = randomToken();
   const ttlMs = 7 * 24 * 3600 * 1000; // 7 days
-  StoreRef.addToken(token, username, role, ttlMs);
+  StoreRef.addToken(token, user.username, user.role, ttlMs);
   res.cookie(cookieName, token, {
     httpOnly: true,
     sameSite: 'lax',
@@ -88,8 +89,8 @@ function openSession(res, username, role) {
   return token;
 }
 
-function closeSession(req, res) {
-  const tok = req.cookies[cookieName];
+function clearSession(req, res) {
+  const tok = req.cookies ? req.cookies[cookieName] : null;
   if (tok) StoreRef.revokeToken(tok);
   res.clearCookie(cookieName, { path: '/' });
 }
@@ -101,12 +102,10 @@ function currentUser(req) {
   if (!t) return null;
   const user = StoreRef.getUser(t.username);
   if (!user && t.role !== 'admin') return null;
-  return { username: t.username, role: t.role, user: user || (t.role === 'admin' ? null : null) };
+  return { username: t.username, role: t.role };
 }
 
 // ---------- password management ----------
-// Admin password: a runtime override (set from the admin panel) is stored
-// bcrypt-hashed in the store; otherwise the built-in/env default applies.
 async function verifyAdminPassword(password) {
   const hash = StoreRef.getAdminPassHash();
   if (hash) return bcrypt.compareSync(String(password || ''), hash);
@@ -115,21 +114,21 @@ async function verifyAdminPassword(password) {
 
 function changeAdminPassword(newPass) {
   if (!validatePassword(newPass)) {
-    return { ok: false, error: 'Password must be 6-72 characters.' };
+    return false;
   }
   StoreRef.setAdminPassHash(bcrypt.hashSync(newPass, 10));
-  return { ok: true };
+  return true;
 }
 
 function changeUserPassword(username, newPass) {
   const user = StoreRef.getUser(username);
-  if (!user) return { ok: false, error: 'User not found.' };
+  if (!user) return false;
   if (!validatePassword(newPass)) {
-    return { ok: false, error: 'Password must be 6-72 characters.' };
+    return false;
   }
   user.password = bcrypt.hashSync(newPass, 10);
   StoreRef.upsertUser(user);
-  return { ok: true };
+  return true;
 }
 
 function adminUsername() {
@@ -137,6 +136,6 @@ function adminUsername() {
 }
 
 module.exports = {
-  init, register, login, openSession, closeSession, currentUser, cookieName,
+  init, register, login, setSession, clearSession, currentUser, cookieName,
   verifyAdminPassword, changeAdminPassword, changeUserPassword, adminUsername
 };
