@@ -158,6 +158,34 @@ if [ "$PORT_OK" -eq 0 ]; then
   exit 1
 fi
 
+# --- Start XFCE Desktop ---
+echo "--- Starting XFCE Desktop ---"
+
+# Start XFCE in the background
+"${VNC_HOME}/.vnc/xstartup" &
+XFCE_PID=$!
+echo "XFCE PID: $XFCE_PID"
+
+# Wait for XFCE to start (check for xfce4-session)
+XFCE_OK=0
+for i in $(seq 1 30); do
+  if pgrep -x xfce4-session >/dev/null 2>&1; then
+    XFCE_OK=1
+    echo "XFCE desktop ready (after ${i}s)"
+    break
+  fi
+  if ! kill -0 "$XFCE_PID" 2>/dev/null; then
+    echo "WARNING: XFCE process exited, but may have started successfully"
+    XFCE_OK=1
+    break
+  fi
+  sleep 1
+done
+
+if [ "$XFCE_OK" -eq 0 ]; then
+  echo "WARNING: XFCE may not have started properly, but continuing..."
+fi
+
 # --- Start noVNC websockify ---
 echo "--- Starting noVNC websockify ---"
 
@@ -196,4 +224,5 @@ echo "Display: :${DISPLAY_NUM}"
 echo "VNC Port: ${VNC_PORT}"
 echo "WebSocket Port: ${WEBPORT}"
 echo "Xvnc PID: $VNC_PID"
+echo "XFCE PID: $XFCE_PID"
 echo "noVNC PID: $NOVNC_PID"
