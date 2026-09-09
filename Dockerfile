@@ -5,7 +5,6 @@
 FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive \
-    NODE_MAJOR=20 \
     PORT=8080 \
     DATA_DIR=/data \
     DISPLAY=:1 \
@@ -13,13 +12,12 @@ ENV DEBIAN_FRONTEND=noninteractive \
     VNC_HOME=/home/abc \
     VNC_PW=password
 
-# --- System packages: Node.js, XFCE, VNC, D-Bus, etc. ---
+# --- System packages: XFCE, VNC, D-Bus, etc. (NO nodejs here) ---
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl ca-certificates gnupg wget \
     software-properties-common apt-transport-https \
-    nodejs npm \
     xfce4 xfce4-terminal xfce4-goodies \
-    dbus-x11 dbus-user-session systemd \
+    dbus-x11 dbus-user-session \
     xfonts-base xfonts-75dpi xfonts-100dpi \
     fonts-noto-color-emoji fonts-noto-cjk \
     novnc websockify \
@@ -28,7 +26,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# --- Ensure Node.js 20 ---
+# --- Install Node.js 20 from NodeSource ---
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
     && apt-get clean \
