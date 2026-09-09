@@ -55,7 +55,7 @@ RUN chmod +x /app/scripts/*.sh \
     && ln -sf /app/public/logo.svg /app/public/favicon.svg || true
 
 # --- VNC config for user ---
-RUN echo "$VNC_PW" | vncpasswd -f > $VNC_HOME/.vnc/passwd \
+RUN echo "$VNC_PW" | /usr/bin/vncpasswd -f > $VNC_HOME/.vnc/passwd \
     && chmod 600 $VNC_HOME/.vnc/passwd \
     && chown -R $VNC_USER:$VNC_USER $VNC_HOME/.vnc
 
