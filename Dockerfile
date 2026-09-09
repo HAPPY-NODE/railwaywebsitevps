@@ -22,7 +22,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     fonts-noto-color-emoji fonts-noto-cjk \
     novnc websockify \
     tigervnc-standalone-server tigervnc-common tigervnc-viewer \
-    net-tools lsof psmisc \
+    net-tools lsof psmisc python3 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -55,9 +55,14 @@ RUN chmod +x /app/scripts/*.sh \
     && ln -sf /app/public/logo.svg /app/public/favicon.svg || true
 
 # --- VNC config for user ---
-RUN echo "$VNC_PW" | /usr/bin/vncpasswd -f > $VNC_HOME/.vnc/passwd \
-    && chmod 600 $VNC_HOME/.vnc/passwd \
-    && chown -R $VNC_USER:$VNC_USER $VNC_HOME/.vnc
+# Create VNC password file using Python (VNC uses fixed XOR key 0x42)
+RUN python3 -c "
+import os
+pw = os.environ.get('VNC_PW', 'password').encode()[:8].ljust(8, b'\\x00')
+enc = bytes(b ^ 0x42 for b in pw)
+with open('/home/abc/.vnc/passwd', 'wb') as f:
+    f.write(enc)
+" && chmod 600 /home/abc/.vnc/passwd && chown -R abc:abc /home/abc/.vnc
 
 # --- XFCE xstartup for VNC ---
 RUN cat > $VNC_HOME/.vnc/xstartup <<'EOF'
