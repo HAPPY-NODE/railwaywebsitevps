@@ -311,7 +311,7 @@ app.get('/vnc/:user', requireAuth, (req, res) => {
   const cleanHost = host.split(':')[0];
   const url =
     `${proto}://${host}/vnc/${s.username}/vnc.html` +
-    `?autoconnect=true&host=${cleanHost}&port=${port}&path=websockify&resize=remote&reconnect=1&warning=false`;
+    `?autoconnect=true&host=${cleanHost}&port=${port}&path=vnc/${s.username}/websockify&resize=remote&reconnect=1&warning=false`;
   res.redirect(302, url);
 });
 
@@ -324,6 +324,21 @@ app.use('/vnc/:user', requireAuth, (req, res) => {
   const s = sessions.get(req.params.user);
   if (!s) return json(res, 404, { error: 'No active desktop' });
   proxy.web(req, res, { target: `http://127.0.0.1:${s.port}` });
+});
+
+// WebSocket upgrade handler for VNC
+server.on('upgrade', (req, socket, head) => {
+  const url = new URL(req.url, `http://${req.headers.host}`);
+  const match = url.pathname.match(/^\/vnc\/([^/]+)\/websockify/);
+  if (match) {
+    const username = match[1];
+    const s = sessions.get(username);
+    if (s) {
+      proxy.ws(req, socket, head, { target: `http://127.0.0.1:${s.port}` });
+      return;
+    }
+  }
+  socket.destroy();
 });
 
 // ---------- desktop ready page ----------
