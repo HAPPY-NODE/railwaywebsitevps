@@ -34,7 +34,6 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
 # --- Create VNC user ---
 RUN useradd -m -s /bin/bash $VNC_USER \
     && mkdir -p $VNC_HOME/.vnc \
-    && echo "$VNC_USER:$VNC_PW" | chpasswd \
     && chown -R $VNC_USER:$VNC_USER $VNC_HOME
 
 # --- Runtime directories ---
